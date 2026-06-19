@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="PdfMerger/PdfMerger.csproj" />
+  <Project Path="PdfMerger.Core/PdfMerger.Core.csproj" />
+  <Project Path="PdfMerger.Core.Tests/PdfMerger.Core.Tests.csproj" />
+</Solution>
