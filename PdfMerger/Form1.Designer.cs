@@ -30,7 +30,9 @@
         {
             components = new System.ComponentModel.Container();
             _rootLayout = new TableLayoutPanel();
-            _listFiles = new ListBox();
+            _listFiles = new ListView();
+            _colName = new ColumnHeader();
+            _colDateModified = new ColumnHeader();
             _buttonLayout = new FlowLayoutPanel();
             _btnAdd = new Button();
             _btnRemove = new Button();
@@ -82,17 +84,33 @@
             // _listFiles
             // 
             _listFiles.AllowDrop = true;
+            _listFiles.Columns.AddRange(new ColumnHeader[] { _colName, _colDateModified });
             _listFiles.Dock = DockStyle.Fill;
-            _listFiles.FormattingEnabled = true;
-            _listFiles.IntegralHeight = false;
+            _listFiles.FullRowSelect = true;
+            _listFiles.HeaderStyle = ColumnHeaderStyle.Clickable;
+            _listFiles.HideSelection = false;
+            _listFiles.MultiSelect = true;
             _listFiles.Margin = new Padding(3);
             _listFiles.Name = "_listFiles";
-            _listFiles.SelectionMode = SelectionMode.MultiExtended;
+            _listFiles.UseCompatibleStateImageBehavior = false;
+            _listFiles.View = View.Details;
             _listFiles.TabIndex = 1;
             _listFiles.AccessibleName = "PDF file list";
             _listFiles.AccessibleDescription = "List of PDF files to merge in order";
             _listFiles.DragEnter += ListFiles_DragEnter;
             _listFiles.DragDrop += ListFiles_DragDrop;
+            _listFiles.ColumnClick += ListFiles_ColumnClick;
+            _listFiles.Resize += ListFiles_Resize;
+            // 
+            // _colName
+            // 
+            _colName.Text = "Name";
+            _colName.Width = 400;
+            // 
+            // _colDateModified
+            // 
+            _colDateModified.Text = "Date Modified";
+            _colDateModified.Width = 140;
             // 
             // _buttonLayout
             // 
@@ -249,7 +267,9 @@
         #endregion
 
         private TableLayoutPanel _rootLayout;
-        private ListBox _listFiles;
+        private ListView _listFiles;
+        private ColumnHeader _colName;
+        private ColumnHeader _colDateModified;
         private FlowLayoutPanel _buttonLayout;
         private Button _btnAdd;
         private Button _btnRemove;

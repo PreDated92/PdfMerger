@@ -1,3 +1,4 @@
+using System.Collections;
 using PdfMerger.Core;
 
 namespace PdfMerger
@@ -5,10 +6,13 @@ namespace PdfMerger
     public partial class Form1 : Form
     {
         private readonly PdfMergeService _mergeService = new();
+        private int _sortColumn = -1;
+        private SortOrder _sortOrder = SortOrder.None;
 
         public Form1()
         {
             InitializeComponent();
+            ListFiles_Resize(_listFiles, EventArgs.Empty);
         }
 
         private void BtnAdd_Click(object? sender, EventArgs e)
@@ -27,6 +31,7 @@ namespace PdfMerger
                 _listFiles.Items.RemoveAt(_listFiles.SelectedIndices[i]);
             }
 
+            ClearSort();
             UpdateStatus();
         }
 
@@ -43,6 +48,7 @@ namespace PdfMerger
         private void BtnClear_Click(object? sender, EventArgs e)
         {
             _listFiles.Items.Clear();
+            ClearSort();
             UpdateStatus();
         }
 
@@ -85,8 +91,8 @@ namespace PdfMerger
                 return;
             }
 
-            string[] inputPaths = _listFiles.Items.Cast<PdfFileItem>()
-                .Select(item => item.FullPath)
+            string[] inputPaths = _listFiles.Items.Cast<ListViewItem>()
+                .Select(item => (string)item.Tag!)
                 .ToArray();
 
             SetBusy(true);
@@ -133,15 +139,21 @@ namespace PdfMerger
                     continue;
                 }
 
-                bool alreadyAdded = _listFiles.Items.Cast<PdfFileItem>()
-                    .Any(item => string.Equals(item.FullPath, path, StringComparison.OrdinalIgnoreCase));
+                bool alreadyAdded = _listFiles.Items.Cast<ListViewItem>()
+                    .Any(item => string.Equals((string)item.Tag!, path, StringComparison.OrdinalIgnoreCase));
 
                 if (!alreadyAdded)
                 {
-                    _listFiles.Items.Add(new PdfFileItem(path));
+                    ListViewItem listItem = new(Path.GetFileName(path))
+                    {
+                        Tag = path,
+                    };
+                    listItem.SubItems.Add(File.GetLastWriteTime(path).ToString("g"));
+                    _listFiles.Items.Add(listItem);
                 }
             }
 
+            ClearSort();
             UpdateStatus();
         }
 
@@ -152,7 +164,7 @@ namespace PdfMerger
                 return;
             }
 
-            int index = _listFiles.SelectedIndex;
+            int index = _listFiles.SelectedIndices[0];
             int newIndex = index + offset;
 
             if (newIndex < 0 || newIndex >= _listFiles.Items.Count)
@@ -160,11 +172,54 @@ namespace PdfMerger
                 return;
             }
 
-            object item = _listFiles.Items[index];
+            ListViewItem item = _listFiles.Items[index];
             _listFiles.Items.RemoveAt(index);
             _listFiles.Items.Insert(newIndex, item);
-            _listFiles.SelectedIndex = newIndex;
+            item.Selected = true;
+            item.Focused = true;
+
+            ClearSort();
         }
+
+        private void ListFiles_ColumnClick(object? sender, ColumnClickEventArgs e)
+        {
+            if (e.Column == _sortColumn)
+            {
+                _sortOrder = _sortOrder == SortOrder.Ascending ? SortOrder.Descending : SortOrder.Ascending;
+            }
+            else
+            {
+                _sortColumn = e.Column;
+                _sortOrder = SortOrder.Ascending;
+            }
+
+            _listFiles.ListViewItemSorter = new PdfFileItemComparer(_sortColumn, _sortOrder);
+            _listFiles.Sort();
+            UpdateSortIndicators();
+        }
+
+        private void ListFiles_Resize(object? sender, EventArgs e)
+        {
+            const int dateColumnWidth = 140;
+            _colDateModified.Width = dateColumnWidth;
+            _colName.Width = Math.Max(_listFiles.ClientSize.Width - dateColumnWidth, 150);
+        }
+
+        private void ClearSort()
+        {
+            _sortColumn = -1;
+            _sortOrder = SortOrder.None;
+            _listFiles.ListViewItemSorter = null;
+            UpdateSortIndicators();
+        }
+
+        private void UpdateSortIndicators()
+        {
+            _colName.Text = "Name" + (_sortColumn == 0 ? SortArrow() : string.Empty);
+            _colDateModified.Text = "Date Modified" + (_sortColumn == 1 ? SortArrow() : string.Empty);
+        }
+
+        private string SortArrow() => _sortOrder == SortOrder.Descending ? " ▼" : " ▲";
 
         private void SetBusy(bool busy)
         {
@@ -182,18 +237,33 @@ namespace PdfMerger
         }
 
         /// <summary>
-        /// Represents a PDF file entry in the list, displaying the file name while retaining the full path.
+        /// Sorts <see cref="ListViewItem"/> rows by name (column 0) or last-modified date
+        /// (column 1) in the given direction. Each item's full path is read from its <see cref="ListViewItem.Tag"/>.
         /// </summary>
-        private sealed class PdfFileItem
+        private sealed class PdfFileItemComparer : IComparer
         {
-            public PdfFileItem(string fullPath)
+            private readonly int _column;
+            private readonly SortOrder _order;
+
+            public PdfFileItemComparer(int column, SortOrder order)
             {
-                FullPath = fullPath;
+                _column = column;
+                _order = order;
             }
 
-            public string FullPath { get; }
+            public int Compare(object? x, object? y)
+            {
+                ListViewItem itemX = (ListViewItem)x!;
+                ListViewItem itemY = (ListViewItem)y!;
 
-            public override string ToString() => Path.GetFileName(FullPath);
+                int result = _column == 1
+                    ? DateTime.Compare(GetLastWriteTime(itemX), GetLastWriteTime(itemY))
+                    : string.Compare(itemX.Text, itemY.Text, StringComparison.CurrentCultureIgnoreCase);
+
+                return _order == SortOrder.Descending ? -result : result;
+            }
+
+            private static DateTime GetLastWriteTime(ListViewItem item) => File.GetLastWriteTime((string)item.Tag!);
         }
     }
 }
