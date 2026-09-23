@@ -9,10 +9,46 @@ namespace PdfMerger
         private int _sortColumn = -1;
         private SortOrder _sortOrder = SortOrder.None;
 
+        private const string DevDocsText = """
+            List Sorting — How It Works
+            ============================
+
+            The file list (_listFiles) is a System.Windows.Forms.ListView in Details
+            view with two columns: Name and Date Modified.
+
+            Clicking a column header:
+            - Raises ListView.ColumnClick, handled by ListFiles_ColumnClick.
+            - Clicking a new column sets _sortColumn to that column and _sortOrder to
+              Ascending.
+            - Clicking the same column again toggles _sortOrder between Ascending and
+              Descending. Clicking the other column restarts it at Ascending.
+            - The handler assigns a new PdfFileItemComparer(_sortColumn, _sortOrder) to
+              _listFiles.ListViewItemSorter, then calls _listFiles.Sort() to apply it.
+
+            How rows are compared (PdfFileItemComparer, nested in Form1.cs):
+            - Name column (0): string.Compare on ListViewItem.Text, case-insensitive,
+              culture-aware.
+            - Date Modified column (1): DateTime.Compare using File.GetLastWriteTime of
+              the full path stored in each item's Tag.
+            - The comparison result is negated when _sortOrder is Descending.
+
+            Sort indicator:
+            - UpdateSortIndicators appends " ▲" (ascending) or " ▼" (descending) to the
+              active column's header text. The inactive header stays plain.
+
+            Sorting is one-shot, not a maintained live order:
+            - ClearSort resets _sortColumn/_sortOrder to their defaults, clears
+              ListViewItemSorter, and removes both header arrows.
+            - It's called from AddFiles, BtnRemove_Click, MoveSelectedItem, and
+              BtnClear_Click - every action that mutates the list - because the list
+              isn't guaranteed to still be sorted after a mutation.
+            """;
+
         public Form1()
         {
             InitializeComponent();
             ListFiles_Resize(_listFiles, EventArgs.Empty);
+            _txtDevDocs.Text = DevDocsText;
         }
 
         private void BtnAdd_Click(object? sender, EventArgs e)

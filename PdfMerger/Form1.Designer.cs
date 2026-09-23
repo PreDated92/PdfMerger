@@ -29,6 +29,8 @@
         private void InitializeComponent()
         {
             components = new System.ComponentModel.Container();
+            _tabMain = new TabControl();
+            _tabPageMerge = new TabPage();
             _rootLayout = new TableLayoutPanel();
             _listFiles = new ListView();
             _colName = new ColumnHeader();
@@ -43,13 +45,18 @@
             _btnMerge = new Button();
             _chkNewSheet = new CheckBox();
             _lblHint = new Label();
+            _tabPageDevDocs = new TabPage();
+            _txtDevDocs = new TextBox();
             _statusStrip = new StatusStrip();
             _statusLabel = new ToolStripStatusLabel();
             _openFileDialog = new OpenFileDialog();
             _saveFileDialog = new SaveFileDialog();
+            _tabMain.SuspendLayout();
+            _tabPageMerge.SuspendLayout();
             _rootLayout.SuspendLayout();
             _buttonLayout.SuspendLayout();
             _bottomLayout.SuspendLayout();
+            _tabPageDevDocs.SuspendLayout();
             _statusStrip.SuspendLayout();
             SuspendLayout();
             // 
@@ -217,6 +224,51 @@
             _chkNewSheet.AccessibleName = "Start each document on a new sheet";
             _chkNewSheet.AccessibleDescription = "Inserts a blank page after a document with an odd page count so the next document starts on a new sheet when printing double-sided";
             // 
+            // _tabMain
+            // 
+            _tabMain.Controls.Add(_tabPageMerge);
+            _tabMain.Controls.Add(_tabPageDevDocs);
+            _tabMain.Dock = DockStyle.Fill;
+            _tabMain.Location = new Point(0, 0);
+            _tabMain.Name = "_tabMain";
+            _tabMain.SelectedIndex = 0;
+            _tabMain.Size = new Size(800, 428);
+            _tabMain.TabIndex = 0;
+            // 
+            // _tabPageMerge
+            // 
+            _tabPageMerge.Controls.Add(_rootLayout);
+            _tabPageMerge.Location = new Point(4, 24);
+            _tabPageMerge.Name = "_tabPageMerge";
+            _tabPageMerge.Size = new Size(792, 400);
+            _tabPageMerge.TabIndex = 0;
+            _tabPageMerge.Text = "Merge PDFs";
+            _tabPageMerge.UseVisualStyleBackColor = true;
+            // 
+            // _tabPageDevDocs
+            // 
+            _tabPageDevDocs.Controls.Add(_txtDevDocs);
+            _tabPageDevDocs.Location = new Point(4, 24);
+            _tabPageDevDocs.Name = "_tabPageDevDocs";
+            _tabPageDevDocs.Padding = new Padding(8);
+            _tabPageDevDocs.Size = new Size(792, 400);
+            _tabPageDevDocs.TabIndex = 1;
+            _tabPageDevDocs.Text = "Developer Documentation";
+            _tabPageDevDocs.UseVisualStyleBackColor = true;
+            // 
+            // _txtDevDocs
+            // 
+            _txtDevDocs.BackColor = SystemColors.Window;
+            _txtDevDocs.Dock = DockStyle.Fill;
+            _txtDevDocs.Location = new Point(8, 8);
+            _txtDevDocs.Multiline = true;
+            _txtDevDocs.Name = "_txtDevDocs";
+            _txtDevDocs.ReadOnly = true;
+            _txtDevDocs.ScrollBars = ScrollBars.Vertical;
+            _txtDevDocs.Size = new Size(776, 384);
+            _txtDevDocs.TabIndex = 0;
+            _txtDevDocs.AccessibleName = "Developer documentation notes";
+            // 
             // _statusStrip
             // 
             _statusStrip.Items.AddRange(new ToolStripItem[] { _statusLabel });
@@ -247,17 +299,20 @@
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             ClientSize = new Size(800, 450);
-            Controls.Add(_rootLayout);
+            Controls.Add(_tabMain);
             Controls.Add(_statusStrip);
             MinimumSize = new Size(520, 360);
             Name = "Form1";
             Text = "PDF Merger";
+            _tabMain.ResumeLayout(false);
+            _tabPageMerge.ResumeLayout(false);
             _rootLayout.ResumeLayout(false);
             _rootLayout.PerformLayout();
             _buttonLayout.ResumeLayout(false);
             _buttonLayout.PerformLayout();
             _bottomLayout.ResumeLayout(false);
             _bottomLayout.PerformLayout();
+            _tabPageDevDocs.ResumeLayout(false);
             _statusStrip.ResumeLayout(false);
             _statusStrip.PerformLayout();
             ResumeLayout(false);
@@ -266,6 +321,10 @@
 
         #endregion
 
+        private TabControl _tabMain;
+        private TabPage _tabPageMerge;
+        private TabPage _tabPageDevDocs;
+        private TextBox _txtDevDocs;
         private TableLayoutPanel _rootLayout;
         private ListView _listFiles;
         private ColumnHeader _colName;
