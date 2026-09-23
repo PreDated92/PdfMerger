@@ -31,6 +31,7 @@
             components = new System.ComponentModel.Container();
             _tabMain = new TabControl();
             _tabPageMerge = new TabPage();
+            _previewSplit = new SplitContainer();
             _rootLayout = new TableLayoutPanel();
             _listFiles = new ListView();
             _colName = new ColumnHeader();
@@ -41,22 +42,35 @@
             _btnMoveUp = new Button();
             _btnMoveDown = new Button();
             _btnClear = new Button();
+            _chkShowPreview = new CheckBox();
+            _previewPanel = new PdfPreviewPanel();
             _bottomLayout = new FlowLayoutPanel();
             _btnMerge = new Button();
             _chkNewSheet = new CheckBox();
             _lblHint = new Label();
             _tabPageDevDocs = new TabPage();
-            _txtDevDocs = new TextBox();
+            _tabDevDocs = new TabControl();
+            _tabDevDocsListSorting = new TabPage();
+            _txtDevDocsListSorting = new TextBox();
+            _tabDevDocsPdfPreview = new TabPage();
+            _txtDevDocsPdfPreview = new TextBox();
             _statusStrip = new StatusStrip();
             _statusLabel = new ToolStripStatusLabel();
             _openFileDialog = new OpenFileDialog();
             _saveFileDialog = new SaveFileDialog();
             _tabMain.SuspendLayout();
             _tabPageMerge.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)_previewSplit).BeginInit();
+            _previewSplit.Panel1.SuspendLayout();
+            _previewSplit.Panel2.SuspendLayout();
+            _previewSplit.SuspendLayout();
             _rootLayout.SuspendLayout();
             _buttonLayout.SuspendLayout();
             _bottomLayout.SuspendLayout();
             _tabPageDevDocs.SuspendLayout();
+            _tabDevDocs.SuspendLayout();
+            _tabDevDocsListSorting.SuspendLayout();
+            _tabDevDocsPdfPreview.SuspendLayout();
             _statusStrip.SuspendLayout();
             SuspendLayout();
             // 
@@ -108,6 +122,7 @@
             _listFiles.DragDrop += ListFiles_DragDrop;
             _listFiles.ColumnClick += ListFiles_ColumnClick;
             _listFiles.Resize += ListFiles_Resize;
+            _listFiles.SelectedIndexChanged += ListFiles_SelectedIndexChanged;
             // 
             // _colName
             // 
@@ -132,6 +147,7 @@
             _buttonLayout.Controls.Add(_btnMoveUp);
             _buttonLayout.Controls.Add(_btnMoveDown);
             _buttonLayout.Controls.Add(_btnClear);
+            _buttonLayout.Controls.Add(_chkShowPreview);
             _buttonLayout.TabIndex = 2;
             // 
             // _btnAdd
@@ -189,6 +205,17 @@
             _btnClear.AccessibleName = "Clear all files";
             _btnClear.Click += BtnClear_Click;
             // 
+            // _chkShowPreview
+            // 
+            _chkShowPreview.AutoSize = true;
+            _chkShowPreview.Margin = new Padding(3, 14, 3, 3);
+            _chkShowPreview.Name = "_chkShowPreview";
+            _chkShowPreview.Text = "Show &Preview";
+            _chkShowPreview.UseVisualStyleBackColor = true;
+            _chkShowPreview.AccessibleName = "Show PDF preview panel";
+            _chkShowPreview.AccessibleDescription = "Shows a collapsible panel that previews the selected PDF file";
+            _chkShowPreview.CheckedChanged += ChkShowPreview_CheckedChanged;
+            // 
             // _bottomLayout
             // 
             _bottomLayout.AutoSize = true;
@@ -237,7 +264,7 @@
             // 
             // _tabPageMerge
             // 
-            _tabPageMerge.Controls.Add(_rootLayout);
+            _tabPageMerge.Controls.Add(_previewSplit);
             _tabPageMerge.Location = new Point(4, 24);
             _tabPageMerge.Name = "_tabPageMerge";
             _tabPageMerge.Size = new Size(792, 400);
@@ -245,9 +272,37 @@
             _tabPageMerge.Text = "Merge PDFs";
             _tabPageMerge.UseVisualStyleBackColor = true;
             // 
+            // _previewSplit
+            // 
+            _previewSplit.Dock = DockStyle.Fill;
+            _previewSplit.FixedPanel = FixedPanel.Panel2;
+            _previewSplit.Location = new Point(0, 0);
+            _previewSplit.Name = "_previewSplit";
+            // 
+            // _previewSplit.Panel1
+            // 
+            _previewSplit.Panel1.Controls.Add(_rootLayout);
+            // 
+            // _previewSplit.Panel2
+            // 
+            _previewSplit.Panel2.Controls.Add(_previewPanel);
+            _previewSplit.Panel2Collapsed = true;
+            _previewSplit.Size = new Size(792, 400);
+            _previewSplit.SplitterDistance = 512;
+            _previewSplit.TabIndex = 0;
+            // 
+            // _previewPanel
+            // 
+            _previewPanel.Dock = DockStyle.Fill;
+            _previewPanel.Location = new Point(0, 0);
+            _previewPanel.Name = "_previewPanel";
+            _previewPanel.Size = new Size(280, 400);
+            _previewPanel.TabIndex = 0;
+            _previewPanel.CollapsedChanged += PreviewPanel_CollapsedChanged;
+            // 
             // _tabPageDevDocs
             // 
-            _tabPageDevDocs.Controls.Add(_txtDevDocs);
+            _tabPageDevDocs.Controls.Add(_tabDevDocs);
             _tabPageDevDocs.Location = new Point(4, 24);
             _tabPageDevDocs.Name = "_tabPageDevDocs";
             _tabPageDevDocs.Padding = new Padding(8);
@@ -256,18 +311,62 @@
             _tabPageDevDocs.Text = "Developer Documentation";
             _tabPageDevDocs.UseVisualStyleBackColor = true;
             // 
-            // _txtDevDocs
+            // _tabDevDocs
             // 
-            _txtDevDocs.BackColor = SystemColors.Window;
-            _txtDevDocs.Dock = DockStyle.Fill;
-            _txtDevDocs.Location = new Point(8, 8);
-            _txtDevDocs.Multiline = true;
-            _txtDevDocs.Name = "_txtDevDocs";
-            _txtDevDocs.ReadOnly = true;
-            _txtDevDocs.ScrollBars = ScrollBars.Vertical;
-            _txtDevDocs.Size = new Size(776, 384);
-            _txtDevDocs.TabIndex = 0;
-            _txtDevDocs.AccessibleName = "Developer documentation notes";
+            _tabDevDocs.Controls.Add(_tabDevDocsListSorting);
+            _tabDevDocs.Controls.Add(_tabDevDocsPdfPreview);
+            _tabDevDocs.Dock = DockStyle.Fill;
+            _tabDevDocs.Location = new Point(8, 8);
+            _tabDevDocs.Name = "_tabDevDocs";
+            _tabDevDocs.SelectedIndex = 0;
+            _tabDevDocs.Size = new Size(776, 384);
+            _tabDevDocs.TabIndex = 0;
+            // 
+            // _tabDevDocsListSorting
+            // 
+            _tabDevDocsListSorting.Controls.Add(_txtDevDocsListSorting);
+            _tabDevDocsListSorting.Location = new Point(4, 24);
+            _tabDevDocsListSorting.Name = "_tabDevDocsListSorting";
+            _tabDevDocsListSorting.Size = new Size(768, 356);
+            _tabDevDocsListSorting.TabIndex = 0;
+            _tabDevDocsListSorting.Text = "List Sorting";
+            _tabDevDocsListSorting.UseVisualStyleBackColor = true;
+            // 
+            // _txtDevDocsListSorting
+            // 
+            _txtDevDocsListSorting.BackColor = SystemColors.Window;
+            _txtDevDocsListSorting.Dock = DockStyle.Fill;
+            _txtDevDocsListSorting.Location = new Point(0, 0);
+            _txtDevDocsListSorting.Multiline = true;
+            _txtDevDocsListSorting.Name = "_txtDevDocsListSorting";
+            _txtDevDocsListSorting.ReadOnly = true;
+            _txtDevDocsListSorting.ScrollBars = ScrollBars.Vertical;
+            _txtDevDocsListSorting.Size = new Size(768, 356);
+            _txtDevDocsListSorting.TabIndex = 0;
+            _txtDevDocsListSorting.AccessibleName = "List sorting developer documentation notes";
+            // 
+            // _tabDevDocsPdfPreview
+            // 
+            _tabDevDocsPdfPreview.Controls.Add(_txtDevDocsPdfPreview);
+            _tabDevDocsPdfPreview.Location = new Point(4, 24);
+            _tabDevDocsPdfPreview.Name = "_tabDevDocsPdfPreview";
+            _tabDevDocsPdfPreview.Size = new Size(768, 356);
+            _tabDevDocsPdfPreview.TabIndex = 1;
+            _tabDevDocsPdfPreview.Text = "PDF Preview";
+            _tabDevDocsPdfPreview.UseVisualStyleBackColor = true;
+            // 
+            // _txtDevDocsPdfPreview
+            // 
+            _txtDevDocsPdfPreview.BackColor = SystemColors.Window;
+            _txtDevDocsPdfPreview.Dock = DockStyle.Fill;
+            _txtDevDocsPdfPreview.Location = new Point(0, 0);
+            _txtDevDocsPdfPreview.Multiline = true;
+            _txtDevDocsPdfPreview.Name = "_txtDevDocsPdfPreview";
+            _txtDevDocsPdfPreview.ReadOnly = true;
+            _txtDevDocsPdfPreview.ScrollBars = ScrollBars.Vertical;
+            _txtDevDocsPdfPreview.Size = new Size(768, 356);
+            _txtDevDocsPdfPreview.TabIndex = 0;
+            _txtDevDocsPdfPreview.AccessibleName = "PDF preview developer documentation notes";
             // 
             // _statusStrip
             // 
@@ -306,6 +405,10 @@
             Text = "PDF Merger";
             _tabMain.ResumeLayout(false);
             _tabPageMerge.ResumeLayout(false);
+            _previewSplit.Panel1.ResumeLayout(false);
+            _previewSplit.Panel2.ResumeLayout(false);
+            _previewSplit.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)_previewSplit).EndInit();
             _rootLayout.ResumeLayout(false);
             _rootLayout.PerformLayout();
             _buttonLayout.ResumeLayout(false);
@@ -313,6 +416,11 @@
             _bottomLayout.ResumeLayout(false);
             _bottomLayout.PerformLayout();
             _tabPageDevDocs.ResumeLayout(false);
+            _tabDevDocs.ResumeLayout(false);
+            _tabDevDocsListSorting.ResumeLayout(false);
+            _tabDevDocsListSorting.PerformLayout();
+            _tabDevDocsPdfPreview.ResumeLayout(false);
+            _tabDevDocsPdfPreview.PerformLayout();
             _statusStrip.ResumeLayout(false);
             _statusStrip.PerformLayout();
             ResumeLayout(false);
@@ -324,7 +432,14 @@
         private TabControl _tabMain;
         private TabPage _tabPageMerge;
         private TabPage _tabPageDevDocs;
-        private TextBox _txtDevDocs;
+        private TabControl _tabDevDocs;
+        private TabPage _tabDevDocsListSorting;
+        private TextBox _txtDevDocsListSorting;
+        private TabPage _tabDevDocsPdfPreview;
+        private TextBox _txtDevDocsPdfPreview;
+        private SplitContainer _previewSplit;
+        private PdfPreviewPanel _previewPanel;
+        private CheckBox _chkShowPreview;
         private TableLayoutPanel _rootLayout;
         private ListView _listFiles;
         private ColumnHeader _colName;

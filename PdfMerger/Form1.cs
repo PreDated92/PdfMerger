@@ -9,7 +9,10 @@ namespace PdfMerger
         private int _sortColumn = -1;
         private SortOrder _sortOrder = SortOrder.None;
 
-        private const string DevDocsText = """
+        private const int PreviewExpandedWidth = 280;
+        private const int PreviewCollapsedWidth = 32;
+
+        private const string ListSortingDevDocsText = """
             List Sorting — How It Works
             ============================
 
@@ -44,11 +47,70 @@ namespace PdfMerger
               isn't guaranteed to still be sorted after a mutation.
             """;
 
+        private const string PdfPreviewDevDocsText = """
+            PDF Preview — How It Works
+            ============================
+
+            "Show Preview" (_chkShowPreview, in the button column next to the file
+            list) turns the whole feature on or off:
+            - Unchecked (default): _previewSplit.Panel2Collapsed is true, so the
+              preview panel and its splitter are entirely hidden. The file list uses
+              the full tab width, exactly as it did before this feature existed.
+            - Checked: _previewSplit.Panel2Collapsed becomes false, the panel appears
+              at its expanded width, and UpdatePreview() immediately shows the
+              current _listFiles selection.
+
+            Collapsing the panel itself is independent of that checkbox:
+            - _previewPanel is a standalone PdfPreviewPanel UserControl (see
+              PdfPreviewPanel.cs). It knows nothing about Form1, _listFiles, or
+              SplitContainer - its public surface is ShowPreviewAsync(path),
+              ClearPreview(), IsCollapsed/SetCollapsed, and a CollapsedChanged event.
+            - Its header has a small toggle button that flips IsCollapsed and raises
+              CollapsedChanged. Form1 handles that event (PreviewPanel_CollapsedChanged)
+              by resizing _previewSplit.SplitterDistance between
+              PreviewCollapsedWidth (32px, just the header) and
+              PreviewExpandedWidth (280px) - the panel never resizes itself, since it
+              has no reference to the SplitContainer hosting it.
+            - _previewSplit.FixedPanel is set to Panel2, so the preview keeps a
+              constant pixel width when the window is resized (the file list absorbs
+              the change) without any extra resize handling - the same idea already
+              used for the Date Modified column width in ListFiles_Resize.
+
+            Rendering:
+            - PdfPreviewPanel hosts a Microsoft.Web.WebView2.WinForms.WebView2
+              control, reusing Edge's built-in PDF viewer instead of a custom
+              renderer.
+            - The WebView2 core is only initialized (EnsureCoreWebView2Async) the
+              first time a file is actually previewed, not at startup, so users who
+              never enable preview never pay that cost.
+            - ShowPreviewAsync navigates to the file's file:// URI
+              (new Uri(path).AbsoluteUri). If EnsureCoreWebView2Async throws (for
+              example the WebView2 Runtime is missing), PdfPreviewPanel catches the
+              exception and shows a plain-text message in place of the browser
+              control instead of throwing into Form1.
+
+            Selection tracking:
+            - ListFiles_SelectedIndexChanged calls the shared UpdatePreview() helper,
+              which also runs from every place UpdateStatus() already runs
+              (AddFiles, BtnRemove_Click, BtnClear_Click) so adding, removing, or
+              clearing files keeps the preview in sync.
+            - UpdatePreview() does nothing while the checkbox is unchecked. With a
+              selection, it previews the first selected item
+              (_listFiles.SelectedItems[0]); with no selection, it calls
+              ClearPreview() to show the "No file selected" placeholder.
+            - ShowPreviewAsync calls from UpdatePreview() are fire-and-forget. Rapid
+              selection changes can in theory complete out of order and briefly show
+              a stale page - this is accepted as a minor, self-correcting cosmetic
+              issue rather than adding cancellation-token plumbing to a
+              preview-only feature.
+            """;
+
         public Form1()
         {
             InitializeComponent();
             ListFiles_Resize(_listFiles, EventArgs.Empty);
-            _txtDevDocs.Text = DevDocsText;
+            _txtDevDocsListSorting.Text = ListSortingDevDocsText;
+            _txtDevDocsPdfPreview.Text = PdfPreviewDevDocsText;
         }
 
         private void BtnAdd_Click(object? sender, EventArgs e)
@@ -69,6 +131,7 @@ namespace PdfMerger
 
             ClearSort();
             UpdateStatus();
+            UpdatePreview();
         }
 
         private void BtnMoveUp_Click(object? sender, EventArgs e)
@@ -86,6 +149,7 @@ namespace PdfMerger
             _listFiles.Items.Clear();
             ClearSort();
             UpdateStatus();
+            UpdatePreview();
         }
 
         private void ListFiles_DragEnter(object? sender, DragEventArgs e)
@@ -191,6 +255,7 @@ namespace PdfMerger
 
             ClearSort();
             UpdateStatus();
+            UpdatePreview();
         }
 
         private void MoveSelectedItem(int offset)
@@ -270,6 +335,48 @@ namespace PdfMerger
             _statusLabel.Text = count == 0
                 ? "Ready"
                 : $"{count} file(s) ready to merge.";
+        }
+
+        private void ChkShowPreview_CheckedChanged(object? sender, EventArgs e)
+        {
+            _previewSplit.Panel2Collapsed = !_chkShowPreview.Checked;
+
+            if (_chkShowPreview.Checked)
+            {
+                UpdatePreview();
+            }
+        }
+
+        private void PreviewPanel_CollapsedChanged(object? sender, EventArgs e)
+        {
+            int desiredPanel2Width = _previewPanel.IsCollapsed ? PreviewCollapsedWidth : PreviewExpandedWidth;
+            _previewSplit.SplitterDistance = Math.Max(0, _previewSplit.Width - desiredPanel2Width - _previewSplit.SplitterWidth);
+        }
+
+        private void ListFiles_SelectedIndexChanged(object? sender, EventArgs e)
+        {
+            UpdatePreview();
+        }
+
+        private void UpdatePreview()
+        {
+            if (!_chkShowPreview.Checked)
+            {
+                return;
+            }
+
+            string? path = _listFiles.SelectedItems.Count > 0
+                ? (string)_listFiles.SelectedItems[0].Tag!
+                : null;
+
+            if (path is not null)
+            {
+                _ = _previewPanel.ShowPreviewAsync(path);
+            }
+            else
+            {
+                _previewPanel.ClearPreview();
+            }
         }
 
         /// <summary>
